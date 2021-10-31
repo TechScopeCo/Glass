@@ -51,13 +51,14 @@ class TESTXML(models.TransientModel):
 
             list_attrs = ["width","height","calculation_area","price_per_sqm_net","unit_weight","unit_price_net"]
             var_val_ids = []
+            var_val_ids2 = []
             var_ids = []
 
             for val in list_attrs:
 
                 pr_attr = self.env["product.attribute"].search([('name', '=', val)])
                 if not pr_attr:
-                    pr_attr = self.env["product.attribute"].create({'name': val, 'display_type': 'select', 'create_variant': 'always'})
+                    pr_attr = self.env["product.attribute"].create({'name': val, 'display_type': 'select', 'create_variant': 'dynamic'})
  
                 attr_exis_values = pr_attr.value_ids.mapped("name")
 
@@ -66,10 +67,12 @@ class TESTXML(models.TransientModel):
                     pr_Atrr_val = pr_attr.value_ids.create({"attribute_id": pr_attr.id, 'name': attr_val, })
                     # pr_Atrr_val = pr_Atrr_val.name
                     var_val_ids.append(str(pr_Atrr_val.name))
+                    var_val_ids2.append(pr_Atrr_val.id)
                 else:
 
                     pr_Atrr_val = pr_attr.value_ids.search([("attribute_id",'=', pr_attr.id) ,('name','=', attr_val)])
                     var_val_ids.append(str(pr_Atrr_val.name))
+                    var_val_ids2.append(pr_Atrr_val.id)
                 exis_var = pr.attribute_line_ids
                 if pr_attr.id not in pr.attribute_line_ids.mapped('attribute_id').ids:
                     self.env["product.template.attribute.line"].sudo().create({'product_tmpl_id': pr.id, 'attribute_id' : pr_attr.id, 'value_ids' : [(6,0,[pr_Atrr_val.id])]})
@@ -83,6 +86,9 @@ class TESTXML(models.TransientModel):
             for l in var_val_ids:
                 domain.append(('product_template_attribute_value_ids', 'ilike', l))
             product = self.env['product.product'].sudo().search(domain)
+            if not product:
+               product=  self.env["product.product"].sudo().create(
+                   {'product_tmpl_id': pr.id, 'product_template_attribute_value_ids': [(6, 0, var_val_ids2)]})
             print("PRRR")
             print("PRRR")
             print("PRRR")
